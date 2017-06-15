@@ -14,6 +14,11 @@ from numpy import arange
 
 # biomarker gene detector based on abundance table
 class FS:
+    """
+    Usage::
+
+    >>> fs = FS(training_stand, training_label)
+    """
 
     def __init__(self, data, label):
         self.data = data
@@ -24,9 +29,11 @@ class FS:
     def edgeR(self, fdr_cutoff=0.05):
         """
         Performs a differential expression analysis to identified alterated genes
+        and returns a string of the resulting file name
+        
         :param fdr_cutoff: the cutoff of FDR to keep the genes
-        returns: a string of the resulting file name
         """
+        
         import rpy2.robjects as robjects
         import rpy2.robjects.numpy2ri
         robjects.r('library("edgeR")')
@@ -55,10 +62,12 @@ class FS:
     def fsRF(self, n_trees=10000, input_file):
         """
         Performs feature importance evaluation using random forest
+        and returns a list contains the importance value of each gene
+        
         :param n_trees: the number of generated trees
-        :param input_file: an input data table file with gene expression level
-        returns: a list contains the importance value of each gene
+        :param input_file: an input data table file with gene expression level 
         """
+        
         estimator = RandomForestClassifier(n_estimators=n_trees, random_state=0)
 
         estimator.fit(self.data, self.label)
@@ -68,10 +77,12 @@ class FS:
     def fsDT(self, n_trees=10000, input_file):
         """
         Performs feature importance evaluation using randomized decision trees
+        and returns a list contains the importance value of each gene
+        
         :param n_trees: the number of generated trees
         :param input_file: an input data table file with gene expression level
-        returns: a list contains the importance value of each gene
         """
+        
         estimator = ExtraTreesClassifier(n_estimators=25000, random_state=0)
         estimator.fit(self.data, self.label)
         importances = zip(self.genes, estimator.feature_importances_)
@@ -80,10 +91,12 @@ class FS:
     def fsRFE(self, cv=5, input_file):
         """
         Performs feature importance evaluation using SVM with linear kernel
+        and returns a list contains the selected genes by SVC
+        
         :param cv: the fold of cross-validation
-        :param input_file: an input data table file with gene expression level
-        returns: a list contains the selected genes by SVC
+        :param input_file: an input data table file with gene expression level 
         """
+        
         from sklearn.svm import SVC
         from sklearn.feature_selection import RFECV
         estimator = SVC(kernel="linear")
@@ -92,8 +105,14 @@ class FS:
         markers = selector.support_
         return(self.data.columns[markers])
 
-
+# Classification model on training data using selected genes
+# for prediction of test data 
 class Classifier:
+    """
+    Usage::
+    >>> clf = Classifier(training, test)
+
+    """
 
     def __init__(self, training, test):
         self.training = training
